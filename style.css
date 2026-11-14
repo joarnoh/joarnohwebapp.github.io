@@ -189,3 +189,7 @@ html[data-auth="in"] .auth { display: none; }
 a.brand, a.brand:visited { color: var(--nachtbruin); text-decoration: none; cursor: pointer; }
 a.brand h1 { color: var(--nachtbruin); }
 a.brand:hover h1 { text-decoration: underline; text-decoration-color: var(--amber); text-decoration-thickness: 2px; text-underline-offset: 4px; }
+
+/* Locatie verwijderen */
+.small-btn { padding: 6px 12px; font-size: 13px; }
+.location-card .small-btn { margin-top: 12px; }
