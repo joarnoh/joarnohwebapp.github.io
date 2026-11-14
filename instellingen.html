@@ -19,7 +19,8 @@
       <div class="page-heading"><div><h2>Instellingen</h2><div class="muted">Beheer je account en je gegevens.</div></div></div>
       <div class="panel">
         <div class="setting"><div><strong>Account</strong><p class="muted small" id="account-email"></p></div><button class="secondary" onclick="logout()">Uitloggen</button></div>
-        <div class="setting"><div><strong>Voorbeeldgegevens</strong><p class="muted small">Zet je spullen en locaties terug naar het begin.</p></div><button class="secondary danger" id="reset">Terugzetten</button></div>
+        <div class="setting"><div><strong>Voorbeeldgegevens</strong><p class="muted small">Vul je lijst met voorbeeldspullen en locaties om de app uit te proberen.</p></div><button class="secondary" id="reset">Laden</button></div>
+        <div class="setting"><div><strong>Alles wissen</strong><p class="muted small">Verwijder al je voorwerpen en locaties.</p></div><button class="secondary danger" id="wipe">Wissen</button></div>
       </div>
     </section>
   </main>
@@ -30,11 +31,16 @@
 <script>
   document.getElementById("account-email").textContent = localStorage.getItem("thuisinventaris-user") || "";
   document.getElementById("reset").addEventListener("click", () => {
-    openModal({ title: "Gegevens terugzetten?", text: "Je eigen voorwerpen en locaties worden vervangen door de voorbeeldgegevens.", confirm: "Terugzetten", onConfirm: () => {
+    openModal({ title: "Voorbeeldgegevens laden?", text: "Je eigen voorwerpen en locaties worden vervangen door de voorbeeldgegevens.", confirm: "Laden", onConfirm: () => {
       items = JSON.parse(JSON.stringify(defaultItems)).map(migrate); locations = [...DEFAULT_LOCATIONS];
-      persist(); showToast("Voorbeeldgegevens teruggezet.");
+      persist(); showToast("Voorbeeldgegevens geladen.");
     }});
   });
+document.getElementById("wipe").addEventListener("click", () => {
+  openModal({ title: "Alles wissen?", text: "Al je voorwerpen en locaties worden verwijderd. Dit kan niet ongedaan worden gemaakt.", confirm: "Wissen", onConfirm: () => {
+    items = []; locations = []; persist(); showToast("Alles gewist.");
+  }});
+});
 </script>
 </body>
 </html>
