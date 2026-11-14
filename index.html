@@ -54,7 +54,7 @@
           <div class="form-grid">
             <div class="field full"><label for="item-name">NAAM VOORWERP</label><input id="item-name" required placeholder="Bijvoorbeeld Boormachine"></div>
             <div class="field"><label for="item-category">CATEGORIE</label><select id="item-category"><option>Gereedschap</option><option>Elektronica</option><option>Keuken</option><option>Tuin</option><option>Overig</option></select></div>
-            <div class="field"><label for="item-location">LOCATIE</label><select id="item-location"></select></div>
+            <div class="field"><label for="item-location">LOCATIE</label><select id="item-location" required></select></div>
             <div class="field"><label for="item-quantity">AANTAL</label><input id="item-quantity" type="number" min="1" value="1" required></div>
             <div class="field"><label for="item-qr">QR-CODE (OPTIONEEL)</label><input id="item-qr" placeholder="Bijvoorbeeld QR3"></div>
             <div class="field"><label for="item-expiry">VERVALDATUM (OPTIONEEL)</label><input id="item-expiry" type="date"></div>
@@ -100,6 +100,7 @@
     document.getElementById("stat-loaned").textContent = items.filter(i=>i.loanedTo).length;
     document.getElementById("stat-locations").textContent = locations.length;
     const list = document.getElementById("items-list");
+    if (!items.length) { list.innerHTML = '<div class="empty" style="grid-column:1/-1">Je hebt nog geen voorwerpen.<br><span class="small">Maak eerst een locatie aan bij Locaties en voeg daarna je eerste voorwerp toe.</span></div>'; return; }
     if (!filtered.length) { list.innerHTML = '<div class="empty" style="grid-column:1/-1">Geen voorwerpen gevonden.<br><span class="small">Pas je zoekopdracht of filters aan.</span></div>'; return; }
     list.innerHTML = filtered.map(item => `
       <article class="item-card" tabindex="0" role="button" onclick="openDetail(${item.id})">
@@ -112,7 +113,9 @@
   }
 
   function fillLocationSelect() {
-    document.getElementById("item-location").innerHTML = locations.map(l=>`<option>${escapeHtml(l)}</option>`).join("");
+    document.getElementById("item-location").innerHTML = locations.length
+      ? locations.map(l=>`<option>${escapeHtml(l)}</option>`).join("")
+      : '<option value="">Maak eerst een locatie aan bij Locaties</option>';
   }
 
   function openAdd() {
