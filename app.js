@@ -20,13 +20,19 @@ function migrate(item) {
   return m ? { ...item, expiry: `${m[3]}-${m[2]}-${m[1]}` } : item;
 }
 
-let items = read("thuisinventaris-items", defaultItems).map(migrate);
-let locations = read("thuisinventaris-locations", DEFAULT_LOCATIONS);
+/* Elk account heeft zijn eigen gegevens. Een nieuw account begint leeg. */
+const USER = (() => { try { return localStorage.getItem("thuisinventaris-user") || ""; } catch { return ""; } })();
+const ITEMS_KEY = "thuisinventaris-items:" + USER;
+const LOCATIONS_KEY = "thuisinventaris-locations:" + USER;
+const HELP_KEY = "thuisinventaris-help:" + USER;
+
+let items = read(ITEMS_KEY, []).map(migrate);
+let locations = read(LOCATIONS_KEY, []);
 
 function persist() {
   try {
-    localStorage.setItem("thuisinventaris-items", JSON.stringify(items));
-    localStorage.setItem("thuisinventaris-locations", JSON.stringify(locations));
+    localStorage.setItem(ITEMS_KEY, JSON.stringify(items));
+    localStorage.setItem(LOCATIONS_KEY, JSON.stringify(locations));
   } catch { showToast("Opslaan in deze browser lukt niet."); }
 }
 
@@ -83,6 +89,7 @@ const NAV = [
 document.getElementById("topbar").innerHTML = `
   <a href="index.html" class="brand" aria-label="Naar het overzicht"><div class="brand-mark">T</div><h1>Thuisinventaris</h1></a>
   <div class="top-actions">
+    <button class="icon-button" id="help-button" title="Uitleg" aria-label="Uitleg">?</button>
     <button class="secondary" onclick="logout()">Uitloggen</button>
     <a class="icon-button" href="instellingen.html" title="Instellingen" aria-label="Instellingen"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></a>
   </div>`;
@@ -108,6 +115,30 @@ document.getElementById("modal-form").addEventListener("submit", e => {
 document.getElementById("modal-cancel").addEventListener("click", closeModal);
 document.getElementById("modal").addEventListener("click", e => { if (e.target.id === "modal") closeModal(); });
 document.addEventListener("keydown", e => {
-  if (e.key === "Escape") closeModal();
+  if (e.key === "Escape") { closeModal(); closeHelp(); }
   if (e.key === "Enter" && e.target.matches('[role="button"]')) e.target.click();
 });
+
+/* Korte uitleg (het vraagteken in de topbalk). Opent één keer vanzelf op het overzicht. */
+document.body.insertAdjacentHTML("beforeend", `
+  <div id="help" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="help-title">
+    <div class="modal help">
+      <h2 id="help-title">Zo werkt Thuisinventaris</h2>
+      <ol class="help-steps">
+        <li><strong>Maak een locatie.</strong> Ga naar Locaties en voeg toe waar je spullen liggen, bijvoorbeeld Garage – Kast 1.</li>
+        <li><strong>Voeg een voorwerp toe.</strong> Kies bij Spullen "Nieuw voorwerp" en vul de naam, locatie en het aantal in.</li>
+        <li><strong>Vind je spullen terug.</strong> Zoek op naam of locatie, of typ een QR-code bij Scan QR.</li>
+        <li><strong>Leen iets uit.</strong> Open een voorwerp en kies "Uitlenen aan…", zodat je weet wie het heeft.</li>
+        <li><strong>Nodig familie uit.</strong> Dat doe je bij Familie.</li>
+      </ol>
+      <div class="form-actions"><button class="primary" id="help-close">Begrepen</button></div>
+    </div>
+  </div>`);
+function openHelp() { document.getElementById("help").classList.add("show"); document.getElementById("help-close").focus(); }
+function closeHelp() { document.getElementById("help").classList.remove("show"); }
+document.getElementById("help-button").addEventListener("click", openHelp);
+document.getElementById("help-close").addEventListener("click", closeHelp);
+document.getElementById("help").addEventListener("click", e => { if (e.target.id === "help") closeHelp(); });
+if (PAGE === "index") {
+  try { if (!localStorage.getItem(HELP_KEY)) { localStorage.setItem(HELP_KEY, "1"); openHelp(); } } catch {}
+}
