@@ -34,7 +34,7 @@
         <p>${escapeHtml(place.split(" – ")[1] || "Locatie")} · ${here.reduce((n, i) => n + Number(i.quantity), 0)} stuks</p>
         <button class="secondary danger small-btn">Verwijderen</button>
       </article>`;
-    }).join("") || '<div class="empty">Nog geen locaties toegevoegd.</div>';
+    }).join("") || '<div class="empty">Nog geen locaties.<br><span class="small">Maak je eerste locatie aan, bijvoorbeeld Garage – Kast 1.</span></div>';
   }
 
   function addLocation() {
