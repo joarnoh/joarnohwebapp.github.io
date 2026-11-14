@@ -1,481 +1,204 @@
-
 <!DOCTYPE html>
 <html lang="nl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Thuisinventaris</title>
-
-  <script>
-    try {
-      document.documentElement.dataset.auth =
-        localStorage.getItem("thuisinventaris-user") ? "in" : "out";
-    } catch {
-      document.documentElement.dataset.auth = "out";
-    }
-  </script>
-
+  <title>Mijn spullen – Thuisinventaris</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-  <link
-    rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Caladea:wght@700&family=Carlito:wght@400;700&display=swap"
-  >
-
-  <link rel="stylesheet" href="index.css">
-  <link rel="stylesheet" href="login.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caladea:wght@700&family=Carlito:wght@400;700&display=swap">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="index.css">
 </head>
-
 <body data-page="index" data-view="items">
+<div class="app-shell">
+  <header class="topbar" id="topbar"></header>
 
-  <!-- LOGIN -->
-  <main class="auth">
-    <div class="panel auth-card">
-
-      <div class="brand">
-        <div class="brand-mark">T</div>
-        <h1>Thuisinventaris</h1>
+  <main>
+    <section id="view-items" class="view active">
+      <div class="page-heading">
+        <div><h2>Mijn spullen</h2><div class="muted">Alles in huis overzichtelijk bij elkaar.</div></div>
+        <button class="primary desktop-add" onclick="openAdd()">+ Nieuw voorwerp</button>
       </div>
+      <div class="stats">
+        <div class="stat"><strong id="stat-total">0</strong><span>Voorwerpen</span></div>
+        <div class="stat"><strong id="stat-loaned">0</strong><span>Uitgeleend</span></div>
+        <div class="stat"><strong id="stat-locations">0</strong><span>Locaties</span></div>
+      </div>
+      <div class="toolbar">
+        <div class="search-wrap"><span>⌕</span><input id="search" type="search" placeholder="Zoek op naam, locatie of QR-code…" oninput="renderItems()"></div>
+        <select id="category-select" aria-label="Filter op categorie" onchange="renderItems()" style="max-width:210px">
+          <option value="">Alle categorieën</option>
+          <option>Gereedschap</option><option>Elektronica</option><option>Keuken</option><option>Tuin</option><option>Overig</option>
+        </select>
+      </div>
+      <div class="chips">
+        <button class="chip active" data-filter="all" onclick="setFilter('all',this)">Alles</button>
+        <button class="chip" data-filter="available" onclick="setFilter('available',this)">Beschikbaar</button>
+        <button class="chip" data-filter="loaned" onclick="setFilter('loaned',this)">Uitgeleend</button>
+      </div>
+      <div id="items-list" class="items-grid"></div>
+    </section>
 
-      <h2 id="auth-title">Inloggen</h2>
+    <section id="view-detail" class="view">
+      <button class="back" onclick="showView('items')">← Terug naar mijn spullen</button>
+      <div id="detail-content" class="panel"></div>
+    </section>
 
-      <p class="muted" id="auth-text">
-        Log in om je spullen te bekijken.
-      </p>
-
-      <form id="auth-form" novalidate>
-
-        <div class="field">
-          <label for="email">E-MAILADRES</label>
-          <input
-            id="email"
-            type="email"
-            autocomplete="email"
-            placeholder="naam@voorbeeld.nl"
-            required
-          >
-        </div>
-
-        <div class="field">
-          <label for="password">WACHTWOORD</label>
-          <input
-            id="password"
-            type="password"
-            autocomplete="current-password"
-            required
-          >
-        </div>
-
-        <div class="field" id="confirm-field" hidden>
-          <label for="confirm">HERHAAL WACHTWOORD</label>
-          <input
-            id="confirm"
-            type="password"
-            autocomplete="new-password"
-          >
-        </div>
-
-        <div id="auth-error" role="alert"></div>
-
-        <button
-          class="primary full"
-          type="submit"
-          id="auth-submit"
-        >
-          Inloggen
-        </button>
-
-      </form>
-
-      <p class="auth-switch">
-        <span id="switch-text">Nog geen account?</span>
-        <button class="link" type="button" id="switch">
-          Account maken
-        </button>
-      </p>
-
-      <p class="small muted center">
-        Proefaccount: demo@voorbeeld.nl met wachtwoord demo1234.
-        <br>
-        Nieuwe accounts worden alleen in deze browser opgeslagen.
-      </p>
-
-    </div>
+    <section id="view-add" class="view">
+      <button class="back" onclick="showView('items')">← Terug</button>
+      <div class="panel">
+        <h2>Nieuw voorwerp</h2>
+        <p class="muted">Vul de gegevens in om iets aan je inventaris toe te voegen.</p>
+        <form id="item-form" onsubmit="saveItem(event)">
+          <div class="form-grid">
+            <div class="field full"><label for="item-name">NAAM VOORWERP</label><input id="item-name" required placeholder="Bijvoorbeeld Boormachine"></div>
+            <div class="field"><label for="item-category">CATEGORIE</label><select id="item-category"><option>Gereedschap</option><option>Elektronica</option><option>Keuken</option><option>Tuin</option><option>Overig</option></select></div>
+            <div class="field"><label for="item-location">LOCATIE</label><select id="item-location"></select></div>
+            <div class="field"><label for="item-quantity">AANTAL</label><input id="item-quantity" type="number" min="1" value="1" required></div>
+            <div class="field"><label for="item-qr">QR-CODE (OPTIONEEL)</label><input id="item-qr" placeholder="Bijvoorbeeld QR3"></div>
+            <div class="field"><label for="item-expiry">VERVALDATUM (OPTIONEEL)</label><input id="item-expiry" type="date"></div>
+          </div>
+          <div class="form-actions"><button class="secondary" type="button" onclick="showView('items')">Annuleren</button><button class="primary" type="submit">Opslaan</button></div>
+        </form>
+      </div>
+    </section>
   </main>
+  <button class="fab" aria-label="Nieuw voorwerp toevoegen" onclick="openAdd()">+</button>
+  <nav class="bottom-nav" id="nav" aria-label="Hoofdnavigatie"></nav>
+</div>
+<script src="app.js"></script>
+<script>
+  let activeFilter = "all";
+  let currentItemId = null;
 
+  function showView(name) {
+    document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === "view-" + name));
+    document.body.dataset.view = name;
+    if (name === "items") renderItems();
+    if (name === "add") fillLocationSelect();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
-  <!-- APPLICATIE -->
-  <div class="app-shell">
+  function setFilter(filter, button) {
+    activeFilter = filter;
+    document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+    button.classList.add("active");
+    renderItems();
+  }
 
-    <!-- HEADER -->
-    <header class="topbar">
-
-      <a
-        href="index.html"
-        class="brand"
-        aria-label="Naar het overzicht"
-      >
-        <div class="brand-mark">T</div>
-        <h1>Thuisinventaris</h1>
-      </a>
-
-      <div class="top-actions">
-        <button class="secondary" onclick="logout()">
-          Uitloggen
-        </button>
-
-        <a
-          class="icon-button"
-          href="instellingen.html"
-          title="Instellingen"
-          aria-label="Instellingen"
-        >
-          ⚙
-        </a>
-      </div>
-
-    </header>
-
-
-    <!-- INHOUD -->
-    <main>
-
-      <!-- OVERZICHT -->
-      <section id="view-items" class="view active">
-
-        <div class="page-heading">
-
-          <div>
-            <h2>Mijn spullen</h2>
-            <div class="muted">
-              Alles in huis overzichtelijk bij elkaar.
-            </div>
-          </div>
-
-          <button class="primary desktop-add" onclick="openAdd()">
-            + Nieuw voorwerp
-          </button>
-
+  function renderItems() {
+    const query = (document.getElementById("search")?.value || "").toLowerCase();
+    const category = document.getElementById("category-select")?.value || "";
+    const filtered = items.filter(item => {
+      const matchesText = [item.name,item.location,item.qr,item.category,item.loanedTo].join(" ").toLowerCase().includes(query);
+      const matchesCategory = !category || item.category === category;
+      const matchesStatus = activeFilter === "all" || (activeFilter === "loaned" ? !!item.loanedTo : !item.loanedTo);
+      return matchesText && matchesCategory && matchesStatus;
+    });
+    document.getElementById("stat-total").textContent = items.reduce((n,i)=>n+Number(i.quantity),0);
+    document.getElementById("stat-loaned").textContent = items.filter(i=>i.loanedTo).length;
+    document.getElementById("stat-locations").textContent = locations.length;
+    const list = document.getElementById("items-list");
+    if (!filtered.length) { list.innerHTML = '<div class="empty" style="grid-column:1/-1">Geen voorwerpen gevonden.<br><span class="small">Pas je zoekopdracht of filters aan.</span></div>'; return; }
+    list.innerHTML = filtered.map(item => `
+      <article class="item-card" tabindex="0" role="button" onclick="openDetail(${item.id})">
+        <div><h3>${escapeHtml(item.name)}</h3><div class="item-meta">${escapeHtml(item.location)} · ${item.quantity}× · ${escapeHtml(item.qr || "Geen QR")}</div></div>
+        <div class="item-right">
+          ${item.loanedTo ? `<span class="status loaned">Uitgeleend · ${escapeHtml(item.loanedTo)}</span>` : '<span class="status available">Beschikbaar</span>'}
+          ${expiryBadge(item)}<span class="small muted">${escapeHtml(item.category)}</span>
         </div>
-
-
-        <!-- STATISTIEKEN -->
-        <div class="stats">
-
-          <div class="stat">
-            <strong id="stat-total">0</strong>
-            <span>Voorwerpen</span>
-          </div>
-
-          <div class="stat">
-            <strong id="stat-loaned">0</strong>
-            <span>Uitgeleend</span>
-          </div>
-
-          <div class="stat">
-            <strong id="stat-locations">0</strong>
-            <span>Locaties</span>
-          </div>
-
-        </div>
-
-
-        <!-- ZOEKEN -->
-        <div class="toolbar">
-
-          <div class="search-wrap">
-            <span>⌕</span>
-
-            <input
-              id="search"
-              type="search"
-              placeholder="Zoek op naam, locatie of QR-code…"
-              oninput="renderItems()"
-            >
-          </div>
-
-          <select
-            id="category-select"
-            aria-label="Filter op categorie"
-            onchange="renderItems()"
-            style="max-width:210px"
-          >
-            <option value="">Alle categorieën</option>
-            <option>Gereedschap</option>
-            <option>Elektronica</option>
-            <option>Keuken</option>
-            <option>Tuin</option>
-            <option>Overig</option>
-          </select>
-
-        </div>
-
-
-        <!-- FILTERS -->
-        <div class="chips">
-
-          <button
-            class="chip active"
-            data-filter="all"
-            onclick="setFilter('all',this)"
-          >
-            Alles
-          </button>
-
-          <button
-            class="chip"
-            data-filter="available"
-            onclick="setFilter('available',this)"
-          >
-            Beschikbaar
-          </button>
-
-          <button
-            class="chip"
-            data-filter="loaned"
-            onclick="setFilter('loaned',this)"
-          >
-            Uitgeleend
-          </button>
-
-        </div>
-
-
-        <!-- VOORWERPEN -->
-        <div id="items-list" class="items-grid"></div>
-
-      </section>
-
-
-      <!-- DETAIL -->
-      <section id="view-detail" class="view">
-
-        <button class="back" onclick="showView('items')">
-          ← Terug naar mijn spullen
-        </button>
-
-        <div id="detail-content" class="panel"></div>
-
-      </section>
-
-
-      <!-- NIEUW VOORWERP -->
-      <section id="view-add" class="view">
-
-        <button class="back" onclick="showView('items')">
-          ← Terug
-        </button>
-
-        <div class="panel">
-
-          <h2>Nieuw voorwerp</h2>
-
-          <p class="muted">
-            Vul de gegevens in om iets aan je inventaris toe te voegen.
-          </p>
-
-          <form id="item-form" onsubmit="saveItem(event)">
-
-            <div class="form-grid">
-
-              <div class="field full">
-                <label for="item-name">NAAM VOORWERP</label>
-                <input
-                  id="item-name"
-                  required
-                  placeholder="Bijvoorbeeld Boormachine"
-                >
-              </div>
-
-              <div class="field">
-                <label for="item-category">CATEGORIE</label>
-                <select id="item-category">
-                  <option>Gereedschap</option>
-                  <option>Elektronica</option>
-                  <option>Keuken</option>
-                  <option>Tuin</option>
-                  <option>Overig</option>
-                </select>
-              </div>
-
-              <div class="field">
-                <label for="item-location">LOCATIE</label>
-                <select id="item-location"></select>
-              </div>
-
-              <div class="field">
-                <label for="item-quantity">AANTAL</label>
-                <input
-                  id="item-quantity"
-                  type="number"
-                  min="1"
-                  value="1"
-                  required
-                >
-              </div>
-
-              <div class="field">
-                <label for="item-qr">QR-CODE (OPTIONEEL)</label>
-                <input
-                  id="item-qr"
-                  placeholder="Bijvoorbeeld QR3"
-                >
-              </div>
-
-              <div class="field">
-                <label for="item-expiry">VERVALDATUM (OPTIONEEL)</label>
-                <input id="item-expiry" type="date">
-              </div>
-
-            </div>
-
-            <div class="form-actions">
-
-              <button
-                class="secondary"
-                type="button"
-                onclick="showView('items')"
-              >
-                Annuleren
-              </button>
-
-              <button class="primary" type="submit">
-                Opslaan
-              </button>
-
-            </div>
-
-          </form>
-
-        </div>
-
-      </section>
-
-    </main>
-
-
-    <!-- NIEUW VOORWERP KNOP -->
-    <button
-      class="fab"
-      aria-label="Nieuw voorwerp toevoegen"
-      onclick="openAdd()"
-    >
-      +
-    </button>
-
-
-    <!-- NAVIGATIE -->
-    <nav class="bottom-nav" aria-label="Hoofdnavigatie">
-
-      <a class="tab active" href="index.html">
-
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <rect x="4" y="4" width="16" height="16" rx="3"/>
-          <path d="M8 9h8M8 13h8"/>
-        </svg>
-
-        Spullen
-
-      </a>
-
-
-      <a class="tab" href="scan.html">
-
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M4 12h16"/>
-        </svg>
-
-        Scan QR
-
-      </a>
-
-
-      <a class="tab" href="locaties.html">
-
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/>
-          <circle cx="12" cy="10" r="2.5"/>
-        </svg>
-
-        Locaties
-
-      </a>
-
-
-      <a class="tab" href="familie.html">
-
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="9" cy="8" r="3"/>
-          <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5.5a3 3 0 0 1 0 5M18 14.5c1.8.8 3 2.6 3 5.5"/>
-        </svg>
-
-        Familie
-
-      </a>
-
-    </nav>
-
-
-    <!-- MODAL -->
-    <div
-      id="modal"
-      class="modal-backdrop"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modal-title"
-    >
-
-      <form class="modal" id="modal-form">
-
-        <h2 id="modal-title"></h2>
-
-        <p id="modal-text" class="muted"></p>
-
-        <div class="field" id="modal-field">
-
-          <label for="modal-input" id="modal-label"></label>
-
-          <input id="modal-input">
-
-          <select id="modal-select" hidden></select>
-
-        </div>
-
-        <div class="form-actions">
-
-          <button
-            type="button"
-            class="secondary"
-            id="modal-cancel"
-          >
-            Annuleren
-          </button>
-
-          <button
-            type="submit"
-            class="primary"
-            id="modal-ok"
-          >
-            OK
-          </button>
-
-        </div>
-
-      </form>
-
-    </div>
-
-
-    <!-- MELDINGEN -->
-    <div id="toast" class="toast" role="status"></div>
-
-  </div>
-
-
-  <!-- JAVASCRIPT -->
-  <script src="app.js"></script>
-
+      </article>`).join("");
+  }
+
+  function fillLocationSelect() {
+    document.getElementById("item-location").innerHTML = locations.map(l=>`<option>${escapeHtml(l)}</option>`).join("");
+  }
+
+  function openAdd() {
+    document.getElementById("item-form").reset();
+    fillLocationSelect();
+    showView("add");
+  }
+
+  function saveItem(event) {
+    event.preventDefault();
+    const item = {
+      id: Date.now(), name:document.getElementById("item-name").value.trim(),
+      category:document.getElementById("item-category").value,
+      location:document.getElementById("item-location").value,
+      quantity:Math.max(1,Number(document.getElementById("item-quantity").value)),
+      qr:document.getElementById("item-qr").value.trim(), loanedTo:"", loanDate:"",
+      expiry:document.getElementById("item-expiry").value
+    };
+    if (item.qr && items.some(i=>i.qr.toLowerCase()===item.qr.toLowerCase())) { showToast("Deze QR-code is al in gebruik."); return; }
+    items.push(item); persist(); showView("items"); showToast("Voorwerp opgeslagen.");
+  }
+
+  function openDetail(id) {
+    currentItemId = id;
+    const item = items.find(i=>i.id===id);
+    if (!item) return;
+    document.getElementById("detail-content").innerHTML = `
+      <span class="status ${item.loanedTo?'loaned':'available'}">${item.loanedTo?'Uitgeleend · '+escapeHtml(item.loanedTo):'Beschikbaar'}</span>
+      <h2 style="margin-top:12px">${escapeHtml(item.name)}</h2>
+      <p class="muted">${escapeHtml(item.category)} · ${item.quantity} ${item.quantity===1?'stuk':'stuks'}</p>
+      <p><strong>Locatie</strong><br>${escapeHtml(item.location)}</p>
+      <p><strong>QR-code</strong><br>${escapeHtml(item.qr || "Niet gekoppeld")}</p>
+      ${item.loanedTo ? `<div class="loan-box"><strong>Uitgeleend aan ${escapeHtml(item.loanedTo)}</strong><br><span class="small muted">Sinds ${escapeHtml(item.loanDate || "onbekend")}</span></div>` : ""}
+      ${item.expiry ? `<div class="notice">Vervaldatum: ${fmtDate(item.expiry)}</div>` : ""}
+      <div class="qr-placeholder">${escapeHtml(item.qr || "QR")}</div>
+      <div class="detail-actions">
+        ${item.loanedTo ? `<button class="primary" onclick="returnItem(${item.id})">Terugbrengen</button>` : `<button class="primary" onclick="lendItem(${item.id})">Uitlenen aan…</button>`}
+        <button class="secondary" onclick="editQuantity(${item.id})">Aantal aanpassen</button>
+        <button class="secondary" onclick="changeLocation(${item.id})">Locatie wijzigen</button>
+        <button class="secondary danger" onclick="deleteItem(${item.id})">Verwijderen</button>
+      </div>`;
+    showView("detail");
+  }
+
+  function lendItem(id) {
+    openModal({ title: "Voorwerp uitlenen", label: "AAN WIE?", confirm: "Uitlenen", onConfirm: name => {
+      name = name.trim(); if (!name) return false;
+      const item = items.find(i => i.id === id);
+      item.loanedTo = name; item.loanDate = new Intl.DateTimeFormat("nl-NL").format(new Date());
+      persist(); openDetail(id); showToast("Voorwerp uitgeleend.");
+    }});
+  }
+
+  function returnItem(id) {
+    const item = items.find(i => i.id === id);
+    item.loanedTo = ""; item.loanDate = "";
+    persist(); openDetail(id); showToast("Voorwerp is teruggebracht.");
+  }
+
+  function editQuantity(id) {
+    const item = items.find(i => i.id === id);
+    openModal({ title: "Aantal aanpassen", label: "AANTAL", type: "number", value: item.quantity, confirm: "Opslaan", onConfirm: amount => {
+      if (!Number.isInteger(Number(amount)) || Number(amount) < 1) { showToast("Vul een geldig aantal in."); return false; }
+      item.quantity = Number(amount); persist(); openDetail(id); showToast("Aantal aangepast.");
+    }});
+  }
+
+  function changeLocation(id) {
+    const item = items.find(i => i.id === id);
+    openModal({ title: "Locatie wijzigen", label: "NIEUWE LOCATIE", options: locations, value: item.location, confirm: "Opslaan", onConfirm: place => {
+      item.location = place; persist(); openDetail(id); showToast("Locatie aangepast.");
+    }});
+  }
+
+  function deleteItem(id) {
+    openModal({ title: "Voorwerp verwijderen?", text: "Dit kan niet ongedaan worden gemaakt.", confirm: "Verwijderen", onConfirm: () => {
+      items = items.filter(i => i.id !== id); persist(); showView("items"); showToast("Voorwerp verwijderd.");
+    }});
+  }
+
+  /* Links vanaf andere pagina's: index.html?zoek=Garage, index.html?voorwerp=2, index.html#nieuw */
+  const params = new URLSearchParams(location.search);
+  if (params.get("zoek")) document.getElementById("search").value = params.get("zoek");
+  renderItems();
+  if (params.get("voorwerp")) openDetail(Number(params.get("voorwerp")));
+  if (location.hash === "#nieuw") openAdd();
+</script>
 </body>
 </html>
