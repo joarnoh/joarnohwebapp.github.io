@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -7,23 +6,15 @@
   <meta name="theme-color" content="#F7F3EE">
   <title>Inloggen | Thuisinventaris</title>
 
-  <script>
-    document.documentElement.dataset.auth = "out";
-  </script>
-
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-  <link
-    rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Caladea:wght@700&family=Carlito:wght@400;700&display=swap"
-  >
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caladea:wght@700&family=Carlito:wght@400;700&display=swap">
 
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="login.css">
 </head>
 
-<body>
+<body data-page="login">
 
   <main class="auth">
     <div class="panel auth-card">
@@ -34,68 +25,35 @@
       </div>
 
       <h2 id="auth-title">Inloggen</h2>
-
-      <p class="muted" id="auth-text">
-        Log in om je spullen te bekijken.
-      </p>
+      <p class="muted" id="auth-text">Log in om je spullen te bekijken.</p>
 
       <form id="auth-form">
-
         <div class="field">
           <label for="email">E-MAILADRES</label>
-          <input
-            id="email"
-            type="email"
-            autocomplete="email"
-            placeholder="naam@voorbeeld.nl"
-            required
-          >
+          <input id="email" type="email" autocomplete="email" placeholder="naam@voorbeeld.nl" required>
         </div>
 
         <div class="field">
           <label for="password">WACHTWOORD</label>
-          <input
-            id="password"
-            type="password"
-            autocomplete="current-password"
-            required
-            minlength="8"
-          >
+          <input id="password" type="password" autocomplete="current-password" required minlength="8">
         </div>
 
         <div class="field" id="confirm-field" hidden>
           <label for="confirm">HERHAAL WACHTWOORD</label>
-          <input
-            id="confirm"
-            type="password"
-            autocomplete="new-password"
-            minlength="8"
-          >
+          <input id="confirm" type="password" autocomplete="new-password">
         </div>
 
         <div id="auth-error" class="notice" role="alert" hidden></div>
 
-        <button
-          class="primary full"
-          type="submit"
-          id="auth-submit"
-        >
-          Inloggen
-        </button>
-
+        <button class="primary full" type="submit" id="auth-submit">Inloggen</button>
       </form>
 
       <p class="auth-switch">
         <span id="switch-text">Nog geen account?</span>
-        <button class="link" type="button" id="switch">
-          Account maken
-        </button>
+        <button class="link" type="button" id="switch">Account maken</button>
       </p>
 
-      <p class="small muted center">
-        Je account wordt in deze browser opgeslagen.
-      </p>
-
+      <p class="small muted center">Je account wordt in deze browser opgeslagen.</p>
     </div>
   </main>
 
@@ -109,16 +67,13 @@
     const emailInput = document.getElementById("email");
     const passwordInput = document.getElementById("password");
     const confirmInput = document.getElementById("confirm");
-
     const confirmField = document.getElementById("confirm-field");
     const errorBox = document.getElementById("auth-error");
+    const submitButton = document.getElementById("auth-submit");
 
     function getAccounts() {
       try {
-        const accounts = JSON.parse(
-          localStorage.getItem(ACCOUNT_KEY) || "[]"
-        );
-
+        const accounts = JSON.parse(localStorage.getItem(ACCOUNT_KEY) || "[]");
         return Array.isArray(accounts) ? accounts : [];
       } catch {
         return [];
@@ -137,78 +92,63 @@
 
     function switchMode() {
       registering = !registering;
-
       clearError();
       form.reset();
 
-      document.getElementById("auth-title").textContent =
-        registering ? "Account maken" : "Inloggen";
-
-      document.getElementById("auth-text").textContent =
-        registering
-          ? "Maak een account om je inventaris te beheren."
-          : "Log in om je spullen te bekijken.";
-
-      document.getElementById("auth-submit").textContent =
-        registering ? "Account aanmaken" : "Inloggen";
-
-      document.getElementById("switch-text").textContent =
-        registering ? "Heb je al een account?" : "Nog geen account?";
-
-      document.getElementById("switch").textContent =
-        registering ? "Inloggen" : "Account maken";
+      document.getElementById("auth-title").textContent = registering ? "Account maken" : "Inloggen";
+      document.getElementById("auth-text").textContent = registering
+        ? "Maak een account om je inventaris te beheren."
+        : "Log in om je spullen te bekijken.";
+      submitButton.textContent = registering ? "Account aanmaken" : "Inloggen";
+      document.getElementById("switch-text").textContent = registering ? "Heb je al een account?" : "Nog geen account?";
+      document.getElementById("switch").textContent = registering ? "Inloggen" : "Account maken";
 
       confirmField.hidden = !registering;
-
-      passwordInput.autocomplete =
-        registering ? "new-password" : "current-password";
-
       confirmInput.required = registering;
+      passwordInput.autocomplete = registering ? "new-password" : "current-password";
     }
 
-    document.getElementById("switch").addEventListener(
-      "click",
-      switchMode
-    );
+    document.getElementById("switch").addEventListener("click", switchMode);
 
-    async function hashPassword(password, salt) {
-      if (!crypto.subtle) {
-        throw new Error(
-          "Veilige wachtwoordverwerking is niet beschikbaar. Open de website via HTTPS."
-        );
+    // De salt wordt als hex-tekst opgeslagen, maar crypto.subtle wil bytes.
+    function bytesToHex(bytes) {
+      return Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    function hexToBytes(hex) {
+      const pairs = hex.match(/.{2}/g) || [];
+      return new Uint8Array(pairs.map(pair => parseInt(pair, 16)));
+    }
+
+    function createSalt() {
+      return bytesToHex(crypto.getRandomValues(new Uint8Array(16)));
+    }
+
+    async function hashPassword(password, saltHex) {
+      if (!window.crypto || !crypto.subtle) {
+        throw new Error("Veilige wachtwoordverwerking is niet beschikbaar. Open de website via HTTPS.");
       }
 
-      const encoder = new TextEncoder();
-
       const key = await crypto.subtle.importKey(
-        "raw",
-        encoder.encode(password),
-        "PBKDF2",
-        false,
-        ["deriveBits"]
+        "raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]
       );
 
       const bits = await crypto.subtle.deriveBits(
-        {
-          name: "PBKDF2",
-          salt: salt,
-          iterations: 100000,
-          hash: "SHA-256"
-        },
+        { name: "PBKDF2", salt: hexToBytes(saltHex), iterations: 100000, hash: "SHA-256" },
         key,
         256
       );
 
-      return Array.from(new Uint8Array(bits))
-        .map(b => b.toString(16).padStart(2, "0"))
-        .join("");
+      return bytesToHex(new Uint8Array(bits));
     }
 
-    function createSalt() {
-      const salt = crypto.getRandomValues(new Uint8Array(16));
-      return Array.from(bytes)
-        .map(b => b.toString(16).padStart(2, "0"))
-        .join("");
+    function saveUser(email) {
+      try {
+        localStorage.setItem(USER_KEY, email);
+        return localStorage.getItem(USER_KEY) === email;
+      } catch {
+        return false;
+      }
     }
 
     form.addEventListener("submit", async event => {
@@ -218,8 +158,8 @@
       const email = emailInput.value.trim().toLowerCase();
       const password = passwordInput.value;
 
-      if (!email || !password) {
-        showError("Vul je e-mailadres en wachtwoord in.");
+      if (!/^\S+@\S+\.\S+$/.test(email)) {
+        showError("Vul een geldig e-mailadres in.");
         return;
       }
 
@@ -228,9 +168,8 @@
         return;
       }
 
-      const submit = document.getElementById("auth-submit");
-      submit.disabled = true;
-      submit.textContent = "Even wachten...";
+      submitButton.disabled = true;
+      submitButton.textContent = "Even wachten...";
 
       try {
         const accounts = getAccounts();
@@ -249,60 +188,40 @@
           const salt = createSalt();
           const passwordHash = await hashPassword(password, salt);
 
-          accounts.push({
-            email,
-            salt,
-            passwordHash,
-            createdAt: new Date().toISOString()
-          });
+          accounts.push({ email, salt, passwordHash, createdAt: new Date().toISOString() });
 
-          localStorage.setItem(
-            ACCOUNT_KEY,
-            JSON.stringify(accounts)
-          );
-
-        } else {
-          const account = accounts.find(
-            account => account.email === email
-          );
-
-          if (!account) {
-            showError("Dit account bestaat niet.");
+          try {
+            localStorage.setItem(ACCOUNT_KEY, JSON.stringify(accounts));
+          } catch {
+            showError("Deze browser staat het opslaan van een account niet toe.");
             return;
           }
+        } else {
+          const account = accounts.find(item => item.email === email);
 
-          const hash = await hashPassword(
-            password,
-            account.salt
-          );
-
-          if (hash !== account.passwordHash) {
-            showError("Het wachtwoord is niet correct.");
+          if (!account || (await hashPassword(password, account.salt)) !== account.passwordHash) {
+            showError("Het e-mailadres of wachtwoord klopt niet.");
             return;
           }
         }
 
-        localStorage.setItem(USER_KEY, email);
+        if (!saveUser(email)) {
+          showError("Je browser onthoudt je login niet. Open de site via de GitHub Pages-link en niet als los bestand.");
+          return;
+        }
 
         location.replace("index.html");
-
       } catch (error) {
-        showError(
-          error.message || "Er is iets misgegaan. Probeer opnieuw."
-        );
+        showError(error.message || "Er is iets misgegaan. Probeer opnieuw.");
       } finally {
-        submit.disabled = false;
-        submit.textContent = registering
-          ? "Account aanmaken"
-          : "Inloggen";
+        submitButton.disabled = false;
+        submitButton.textContent = registering ? "Account aanmaken" : "Inloggen";
       }
     });
 
     // Al ingelogd? Ga direct naar de inventaris.
     try {
-      if (localStorage.getItem(USER_KEY)) {
-        location.replace("index.html");
-      }
+      if (localStorage.getItem(USER_KEY)) location.replace("index.html");
     } catch {
       showError("Lokale opslag is niet beschikbaar.");
     }
@@ -310,4 +229,3 @@
 
 </body>
 </html>
-
