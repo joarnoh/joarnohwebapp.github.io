@@ -1,1 +1,68 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Locaties – Thuisinventaris</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caladea:wght@700&family=Carlito:wght@400;700&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="locaties.css">
+</head>
+<body data-page="locaties">
+<div class="app-shell">
+  <header class="topbar" id="topbar"></header>
 
+  <main>
+    <section>
+      <div class="page-heading"><div><h2>Locaties</h2><div class="muted">Waar liggen je spullen?</div></div><button class="primary" onclick="addLocation()">+ Nieuwe locatie</button></div>
+      <div id="locations-list" class="location-grid"></div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" id="nav" aria-label="Hoofdnavigatie"></nav>
+</div>
+<script src="app.js"></script>
+<script>
+  function renderLocations() {
+    document.getElementById("locations-list").innerHTML = locations.map(place => {
+      const here = items.filter(i => i.location === place);
+      return `<article class="location-card" tabindex="0" role="button" data-name="${escapeHtml(place)}">
+        <span class="place-count">${here.length} ${here.length === 1 ? "voorwerp" : "voorwerpen"}</span>
+        <h3>${escapeHtml(place.split(" – ")[0])}</h3>
+        <p>${escapeHtml(place.split(" – ")[1] || "Locatie")} · ${here.reduce((n, i) => n + Number(i.quantity), 0)} stuks</p>
+        <button class="secondary danger small-btn">Verwijderen</button>
+      </article>`;
+    }).join("") || '<div class="empty">Nog geen locaties toegevoegd.</div>';
+  }
+
+  function addLocation() {
+    openModal({ title: "Nieuwe locatie", label: "NAAM", confirm: "Toevoegen", onConfirm: name => {
+      name = name.trim(); if (!name) return false;
+      if (locations.some(l => l.toLowerCase() === name.toLowerCase())) { showToast("Deze locatie bestaat al."); return false; }
+      locations.push(name); persist(); renderLocations(); showToast("Locatie toegevoegd.");
+    }});
+  }
+
+  function deleteLocation(name) {
+    const count = items.filter(i => i.location === name).length;
+    if (count) {
+      showToast(`Er ${count === 1 ? "ligt nog 1 voorwerp" : "liggen nog " + count + " voorwerpen"} op deze locatie. Verplaats of verwijder die eerst.`);
+      return;
+    }
+    openModal({ title: "Locatie verwijderen?", text: `${name} wordt uit je lijst gehaald.`, confirm: "Verwijderen", onConfirm: () => {
+      locations = locations.filter(l => l !== name); persist(); renderLocations(); showToast("Locatie verwijderd.");
+    }});
+  }
+
+  document.getElementById("locations-list").addEventListener("click", e => {
+    const card = e.target.closest(".location-card");
+    if (!card) return;
+    if (e.target.closest(".small-btn")) deleteLocation(card.dataset.name);
+    else location.href = "index.html?zoek=" + encodeURIComponent(card.dataset.name);
+  });
+  renderLocations();
+</script>
+</body>
+</html>
