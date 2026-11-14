@@ -1,49 +1,47 @@
 # Thuisinventaris
 
-Weet je niet meer waar je de verlengsnoer hebt gelaten, of aan wie je de boormachine hebt uitgeleend? Met Thuisinventaris houd je alles wat je in huis hebt overzichtelijk bij elkaar.
+Can't remember where you put the extension cord, or who you lent your drill to? Thuisinventaris keeps everything you own at home organized in one place.
 
-Open de app: https://joarnoh.github.io/joarnohwebapp.github.io/
+Open the app: https://joarnoh.github.io/joarnohwebapp.github.io/
 
-## Aan de slag
+## Getting started
 
-1. Open de link hierboven. Dat kan op je telefoon, tablet of computer.
-2. Klik op **Account maken** en vul je e-mailadres en een wachtwoord in. Wil je eerst rondkijken? Log dan in met het proefaccount:
-   - E-mailadres: demo@voorbeeld.nl
-   - Wachtwoord: demo1234
-3. Klaar. Je ziet nu je overzicht met al je spullen.
+1. Open the link above. It works on your phone, tablet or computer.
+2. Click **Account maken** (create account) and enter your email address and a password.
+3. That's it. You'll now see your overview with all your items.
 
-## Zo gebruik je de app
+## How to use the app
 
-### Een voorwerp toevoegen
-1. Klik op **+ Nieuw voorwerp**.
-2. Vul de naam in, kies een categorie (Gereedschap, Elektronica, Keuken, Tuin of Overig), en geef de locatie en het aantal op.
-3. Een QR-code en een vervaldatum zijn niet verplicht.
-4. Klik op **Opslaan**.
+### Add an item
+1. Click **+ Nieuw voorwerp** (new item).
+2. Enter the name, choose a category (Gereedschap, Elektronica, Keuken, Tuin or Overig), and fill in the location and quantity.
+3. A QR code and an expiry date are optional.
+4. Click **Opslaan** (save).
 
-### Je spullen terugvinden
-- Typ in de zoekbalk een naam of een locatie.
-- Kies bovenaan een categorie als je alleen bijvoorbeeld gereedschap wilt zien.
-- Met de knoppen **Alles**, **Beschikbaar** en **Uitgeleend** zie je meteen wat er in huis is en wat er is uitgeleend.
+### Find your stuff
+- Type a name or a location in the search bar.
+- Pick a category at the top if you only want to see, for example, tools.
+- Use the **Alles** (all), **Beschikbaar** (available) and **Uitgeleend** (lent out) buttons to see at a glance what's at home and what's been lent out.
 
-### Locaties
-Onder **Locaties** bepaal je waar je spullen liggen, bijvoorbeeld "Schuur - Plank 1". Klik op **+ Nieuwe locatie** om er een toe te voegen.
+### Locations
+Under **Locaties** you decide where your items are stored, for example "Schuur - Plank 1" (shed, shelf 1). Click **+ Nieuwe locatie** to add one.
 
-### QR-codes
-Heb je een QR-code op een label geplakt? Ga naar **Scan QR**, typ de code in en klik op **Zoeken**. Je ziet dan meteen welk voorwerp erbij hoort.
+### QR codes
+Put a QR code label on an item? Go to **Scan QR**, type the code and click **Zoeken** (search). You'll immediately see which item it belongs to.
 
-### Familie
-Onder **Familie** kun je mensen uitnodigen om mee te kijken of de inventaris bij te houden. Vul hun e-mailadres in en klik op **Uitnodiging versturen**.
+### Family
+Under **Familie** you can invite people to view or help maintain the inventory. Enter their email address and click **Uitnodiging versturen** (send invitation).
 
-## Goed om te weten
+## Good to know
 
-Dit is een proefversie. Daarom werkt een paar dingen nog niet zoals je misschien verwacht:
+This is a demo version, so a few things don't work the way you might expect yet:
 
-- Je gegevens worden alleen opgeslagen in de browser die je nu gebruikt. Op een andere telefoon of computer zie je ze dus niet.
-- Wis je de gegevens van je browser, dan zijn ze weg.
-- Uitnodigingen voor familie worden nog niet echt per e-mail verstuurd.
-- Het scannen van een QR-code met je camera werkt nog niet. Je typt de code zelf in.
-- Gebruik voor de zekerheid geen wachtwoord dat je ook ergens anders gebruikt.
+- Your data is only stored in the browser you're using right now. You won't see it on another phone or computer.
+- If you clear your browser data, your items are gone.
+- Family invitations are not actually sent by email yet.
+- Scanning a QR code with your camera doesn't work yet. You type the code yourself.
+- To be safe, don't use a password that you also use somewhere else.
 
-## Problemen of ideeën?
+## Problems or ideas?
 
-Werkt er iets niet, of mis je iets? Laat het weten aan de maker.
+Something not working, or missing a feature? Let the creator know.
