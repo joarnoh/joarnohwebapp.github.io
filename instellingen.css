@@ -1,1 +1,5 @@
+/* Alleen voor instellingen.html. */
 
+.setting { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--zand); }
+.setting:last-child { border-bottom: 0; }
+.setting p { margin: 2px 0 0; }
