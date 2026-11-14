@@ -135,7 +135,7 @@
     <form class="modal" id="modal-form">
       <h2 id="modal-title"></h2>
       <p id="modal-text" class="muted"></p>
-      <div class="field" id="modal-field"><label for="modal-input" id="modal-label"></label><input id="modal-input"></div>
+      <div class="field" id="modal-field"><label for="modal-input" id="modal-label"></label><input id="modal-input"><select id="modal-select" hidden></select></div>
       <div class="form-actions"><button type="button" class="secondary" id="modal-cancel">Annuleren</button><button type="submit" class="primary" id="modal-ok">OK</button></div>
     </form>
   </div>
@@ -211,10 +211,11 @@
     const list = document.getElementById("locations-list");
     list.innerHTML = locations.map(location => {
       const inLocation = items.filter(i=>i.location===location);
-      return `<article class="location-card" tabindex="0" role="button" onclick="filterLocation('${escapeAttr(location)}')">
+      return `<article class="location-card" tabindex="0" role="button" onclick="filterLocation('${escapeHtml(escapeAttr(location))}')">
         <span class="place-count">${inLocation.length} ${inLocation.length===1?"voorwerp":"voorwerpen"}</span>
         <h3>${escapeHtml(location.split(" – ")[0])}</h3>
         <p>${escapeHtml(location.split(" – ")[1] || "Locatie")} · ${inLocation.reduce((n,i)=>n+Number(i.quantity),0)} stuks</p>
+        <button class="secondary danger small-btn" onclick="event.stopPropagation(); deleteLocation('${escapeHtml(escapeAttr(location))}')">Verwijderen</button>
       </article>`;
     }).join("") || '<div class="empty">Nog geen locaties toegevoegd.</div>';
   }
@@ -263,22 +264,26 @@
       <div class="detail-actions">
         ${item.loanedTo ? `<button class="primary" onclick="returnItem(${item.id})">Terugbrengen</button>` : `<button class="primary" onclick="lendItem(${item.id})">Uitlenen aan…</button>`}
         <button class="secondary" onclick="editQuantity(${item.id})">Aantal aanpassen</button>
+        <button class="secondary" onclick="changeLocation(${item.id})">Locatie wijzigen</button>
         <button class="secondary danger" onclick="deleteItem(${item.id})">Verwijderen</button>
       </div>`;
     showView("detail");
   }
   let modalDone = null;
-  function openModal({ title, text = "", label = "", type = "text", value = "", confirm = "OK", onConfirm }) {
+  function openModal({ title, text = "", label = "", type = "text", value = "", confirm = "OK", options = null, onConfirm }) {
     document.getElementById("modal-title").textContent = title;
     document.getElementById("modal-text").textContent = text;
     document.getElementById("modal-field").hidden = !label;
     document.getElementById("modal-label").textContent = label;
     const input = document.getElementById("modal-input");
-    input.type = type; input.value = value; input.required = !!label; input.min = type === "number" ? 1 : "";
+    const select = document.getElementById("modal-select");
+    input.hidden = !!options; select.hidden = !options;
+    if (options) select.innerHTML = options.map(o => `<option ${o === value ? "selected" : ""}>${escapeHtml(o)}</option>`).join("");
+    input.type = type; input.value = value; input.required = !!label && !options; input.min = type === "number" ? 1 : "";
     document.getElementById("modal-ok").textContent = confirm;
     modalDone = onConfirm;
     document.getElementById("modal").classList.add("show");
-    (label ? input : document.getElementById("modal-ok")).focus();
+    (options ? select : label ? input : document.getElementById("modal-ok")).focus();
   }
   function closeModal() { document.getElementById("modal").classList.remove("show"); }
   function lendItem(id) {
@@ -301,6 +306,12 @@
       item.quantity = Number(amount); persist(); openDetail(id); showToast("Aantal aangepast.");
     }});
   }
+  function changeLocation(id) {
+    const item = items.find(i => i.id === id);
+    openModal({ title: "Locatie wijzigen", label: "NIEUWE LOCATIE", options: locations, value: item.location, confirm: "Opslaan", onConfirm: place => {
+      item.location = place; persist(); openDetail(id); showToast("Locatie aangepast.");
+    }});
+  }
   function deleteItem(id) {
     openModal({ title: "Voorwerp verwijderen?", text: "Dit kan niet ongedaan worden gemaakt.", confirm: "Verwijderen", onConfirm: () => {
       items = items.filter(i => i.id !== id); persist(); showView("items"); showToast("Voorwerp verwijderd.");
@@ -311,6 +322,16 @@
       name = name.trim(); if (!name) return false;
       if (locations.some(l => l.toLowerCase() === name.toLowerCase())) { showToast("Deze locatie bestaat al."); return false; }
       locations.push(name); persist(); renderLocations(); showToast("Locatie toegevoegd.");
+    }});
+  }
+  function deleteLocation(name) {
+    const count = items.filter(i => i.location === name).length;
+    if (count) {
+      showToast(`Er ${count === 1 ? "ligt nog 1 voorwerp" : "liggen nog " + count + " voorwerpen"} op deze locatie. Verplaats of verwijder die eerst.`);
+      return;
+    }
+    openModal({ title: "Locatie verwijderen?", text: `${name} wordt uit je lijst gehaald.`, confirm: "Verwijderen", onConfirm: () => {
+      locations = locations.filter(l => l !== name); persist(); renderLocations(); showToast("Locatie verwijderd.");
     }});
   }
   function lookupQr(event) {
@@ -353,7 +374,9 @@
   }
   document.getElementById("modal-form").addEventListener("submit", e => {
     e.preventDefault();
-    if (modalDone(document.getElementById("modal-input").value) !== false) closeModal();
+    const select = document.getElementById("modal-select");
+    const value = select.hidden ? document.getElementById("modal-input").value : select.value;
+    if (modalDone(value) !== false) closeModal();
   });
   document.getElementById("modal-cancel").addEventListener("click", closeModal);
   document.getElementById("modal").addEventListener("click", e => { if (e.target.id === "modal") closeModal(); });
