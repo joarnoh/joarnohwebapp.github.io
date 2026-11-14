@@ -1,1 +1,5 @@
+/* Alleen voor scan.html. */
+
+#qr-result { margin-top: 16px; text-align: left; }
+#qr-result .notice { margin-bottom: 12px; }
 
