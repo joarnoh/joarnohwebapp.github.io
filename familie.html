@@ -1,1 +1,45 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Familie – Thuisinventaris</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caladea:wght@700&family=Carlito:wght@400;700&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="familie.css">
+</head>
+<body data-page="familie">
+<div class="app-shell">
+  <header class="topbar" id="topbar"></header>
 
+  <main>
+    <section>
+      <div class="page-heading"><div><h2>Familie</h2><div class="muted">Deel je inventaris met mensen die je vertrouwt.</div></div></div>
+      <div class="panel">
+        <h2>Familie uitnodigen</h2>
+        <p class="muted">Nodig iemand uit om mee te kijken of de inventaris bij te houden.</p>
+        <form onsubmit="inviteFamily(event)">
+          <div class="field"><label for="invite-email">E-MAILADRES</label><input id="invite-email" type="email" placeholder="naam@voorbeeld.nl" required></div>
+          <button class="primary" type="submit">Uitnodiging versturen</button>
+        </form>
+        <div id="invite-message"></div>
+        <p class="small muted" style="margin-top:18px">Demo: uitnodigingen worden nog niet echt per e-mail verstuurd.</p>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" id="nav" aria-label="Hoofdnavigatie"></nav>
+</div>
+<script src="app.js"></script>
+<script>
+  function inviteFamily(event) {
+    event.preventDefault();
+    const email = document.getElementById("invite-email").value;
+    document.getElementById("invite-message").innerHTML = `<div class="notice">Uitnodiging voor <strong>${escapeHtml(email)}</strong> klaargezet. E-mailverzending moet nog worden gekoppeld.</div>`;
+    event.target.reset();
+  }
+</script>
+</body>
+</html>
