@@ -26,3 +26,11 @@
   .auth { padding: 0; place-items: start stretch; background: var(--wit); }
   .auth-card { width: 100%; border: 0; border-radius: 0; box-shadow: none; padding: 28px 5%; }
 }
+
+/* De algemene regel voor <main> in style.css (marges en breedte) hoort niet bij het inlogscherm. */
+main.auth {
+  width: 100%;
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
