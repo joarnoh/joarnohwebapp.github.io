@@ -3,229 +3,80 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#F7F3EE">
-  <title>Inloggen | Thuisinventaris</title>
-
+  <title>Familie – Thuisinventaris</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caladea:wght@700&family=Carlito:wght@400;700&display=swap">
-
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="login.css">
+  <link rel="stylesheet" href="familie.css">
 </head>
+<body data-page="familie">
+<div class="app-shell">
+  <header class="topbar" id="topbar"></header>
 
-<body data-page="login">
-
-  <main class="auth">
-    <div class="panel auth-card">
-
-      <div class="brand">
-        <div class="brand-mark">T</div>
-        <h1>Thuisinventaris</h1>
+  <main>
+    <section>
+      <div class="page-heading"><div><h2>Familie</h2><div class="muted">Deel je inventaris met mensen die je vertrouwt.</div></div></div>
+      <div class="panel">
+        <h2>Familie uitnodigen</h2>
+        <p class="muted">Nodig iemand uit om mee te kijken of de inventaris bij te houden.</p>
+        <form onsubmit="inviteFamily(event)">
+          <div class="field"><label for="invite-email">E-MAILADRES</label><input id="invite-email" type="email" placeholder="naam@voorbeeld.nl" required></div>
+          <button class="primary" type="submit">Uitnodiging versturen</button>
+        </form>
+        <div id="invite-message"></div>
+        <p class="small muted" style="margin-top:18px">De uitnodiging bevat een link naar de app. Samen dezelfde lijst bijhouden kan later, daarvoor is een online database nodig.</p>
       </div>
-
-      <h2 id="auth-title">Inloggen</h2>
-      <p class="muted" id="auth-text">Log in om je spullen te bekijken.</p>
-
-      <form id="auth-form">
-        <div class="field">
-          <label for="email">E-MAILADRES</label>
-          <input id="email" type="email" autocomplete="email" placeholder="naam@voorbeeld.nl" required>
-        </div>
-
-        <div class="field">
-          <label for="password">WACHTWOORD</label>
-          <input id="password" type="password" autocomplete="current-password" required minlength="8">
-        </div>
-
-        <div class="field" id="confirm-field" hidden>
-          <label for="confirm">HERHAAL WACHTWOORD</label>
-          <input id="confirm" type="password" autocomplete="new-password">
-        </div>
-
-        <div id="auth-error" class="notice" role="alert" hidden></div>
-
-        <button class="primary full" type="submit" id="auth-submit">Inloggen</button>
-      </form>
-
-      <p class="auth-switch">
-        <span id="switch-text">Nog geen account?</span>
-        <button class="link" type="button" id="switch">Account maken</button>
-      </p>
-
-      <p class="small muted center">Je account wordt in deze browser opgeslagen.</p>
-    </div>
+    </section>
   </main>
 
-  <script>
-    const ACCOUNT_KEY = "thuisinventaris-accounts";
-    const USER_KEY = "thuisinventaris-user";
+  <nav class="bottom-nav" id="nav" aria-label="Hoofdnavigatie"></nav>
+</div>
+<script src="app.js"></script>
+<script>
+  /* E-mail versturen via EmailJS (gratis, werkt zonder eigen server).
+     1. Maak een account op emailjs.com, koppel je e-mail (Email Services) en maak een sjabloon (Email Templates).
+     2. Gebruik in het sjabloon: {{to_email}}, {{from_email}}, {{subject}} en {{message}}.
+     3. Vul hieronder je Service ID, Template ID en Public Key in.
+     Staat dit nog leeg, dan opent de knop je eigen mailprogramma met de uitnodiging al ingevuld. */
+  const EMAILJS = { serviceId: "", templateId: "", publicKey: "" };
 
-    let registering = false;
+  async function inviteFamily(event) {
+    event.preventDefault();
+    const form = event.target;
+    const to = document.getElementById("invite-email").value.trim();
+    const from = localStorage.getItem("thuisinventaris-user") || "";
+    const link = new URL("login.html", location.href).href;
+    const subject = "Uitnodiging voor Thuisinventaris";
+    const message = `Hoi!\n\n${from} nodigt je uit voor Thuisinventaris, een app om bij te houden wat je in huis hebt en waar het ligt.\n\nMaak een account via deze link:\n${link}\n\nGroetjes`;
+    const box = document.getElementById("invite-message");
+    const button = form.querySelector("button[type=submit]");
+    const say = html => { box.innerHTML = `<div class="notice">${html}</div>`; };
 
-    const form = document.getElementById("auth-form");
-    const emailInput = document.getElementById("email");
-    const passwordInput = document.getElementById("password");
-    const confirmInput = document.getElementById("confirm");
-    const confirmField = document.getElementById("confirm-field");
-    const errorBox = document.getElementById("auth-error");
-    const submitButton = document.getElementById("auth-submit");
-
-    function getAccounts() {
+    if (EMAILJS.serviceId && EMAILJS.templateId && EMAILJS.publicKey) {
+      button.disabled = true; button.textContent = "Versturen…";
       try {
-        const accounts = JSON.parse(localStorage.getItem(ACCOUNT_KEY) || "[]");
-        return Array.isArray(accounts) ? accounts : [];
-      } catch {
-        return [];
-      }
-    }
-
-    function showError(message) {
-      errorBox.textContent = message;
-      errorBox.hidden = false;
-    }
-
-    function clearError() {
-      errorBox.textContent = "";
-      errorBox.hidden = true;
-    }
-
-    function switchMode() {
-      registering = !registering;
-      clearError();
-      form.reset();
-
-      document.getElementById("auth-title").textContent = registering ? "Account maken" : "Inloggen";
-      document.getElementById("auth-text").textContent = registering
-        ? "Maak een account om je inventaris te beheren."
-        : "Log in om je spullen te bekijken.";
-      submitButton.textContent = registering ? "Account aanmaken" : "Inloggen";
-      document.getElementById("switch-text").textContent = registering ? "Heb je al een account?" : "Nog geen account?";
-      document.getElementById("switch").textContent = registering ? "Inloggen" : "Account maken";
-
-      confirmField.hidden = !registering;
-      confirmInput.required = registering;
-      passwordInput.autocomplete = registering ? "new-password" : "current-password";
-    }
-
-    document.getElementById("switch").addEventListener("click", switchMode);
-
-    // De salt wordt als hex-tekst opgeslagen, maar crypto.subtle wil bytes.
-    function bytesToHex(bytes) {
-      return Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
-    }
-
-    function hexToBytes(hex) {
-      const pairs = hex.match(/.{2}/g) || [];
-      return new Uint8Array(pairs.map(pair => parseInt(pair, 16)));
-    }
-
-    function createSalt() {
-      return bytesToHex(crypto.getRandomValues(new Uint8Array(16)));
-    }
-
-    async function hashPassword(password, saltHex) {
-      if (!window.crypto || !crypto.subtle) {
-        throw new Error("Veilige wachtwoordverwerking is niet beschikbaar. Open de website via HTTPS.");
-      }
-
-      const key = await crypto.subtle.importKey(
-        "raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]
-      );
-
-      const bits = await crypto.subtle.deriveBits(
-        { name: "PBKDF2", salt: hexToBytes(saltHex), iterations: 100000, hash: "SHA-256" },
-        key,
-        256
-      );
-
-      return bytesToHex(new Uint8Array(bits));
-    }
-
-    function saveUser(email) {
-      try {
-        localStorage.setItem(USER_KEY, email);
-        return localStorage.getItem(USER_KEY) === email;
-      } catch {
-        return false;
-      }
-    }
-
-    form.addEventListener("submit", async event => {
-      event.preventDefault();
-      clearError();
-
-      const email = emailInput.value.trim().toLowerCase();
-      const password = passwordInput.value;
-
-      if (!/^\S+@\S+\.\S+$/.test(email)) {
-        showError("Vul een geldig e-mailadres in.");
-        return;
-      }
-
-      if (password.length < 8) {
-        showError("Je wachtwoord moet minimaal 8 tekens bevatten.");
-        return;
-      }
-
-      submitButton.disabled = true;
-      submitButton.textContent = "Even wachten...";
-
-      try {
-        const accounts = getAccounts();
-
-        if (registering) {
-          if (password !== confirmInput.value) {
-            showError("De wachtwoorden komen niet overeen.");
-            return;
-          }
-
-          if (accounts.some(account => account.email === email)) {
-            showError("Er bestaat al een account met dit e-mailadres.");
-            return;
-          }
-
-          const salt = createSalt();
-          const passwordHash = await hashPassword(password, salt);
-
-          accounts.push({ email, salt, passwordHash, createdAt: new Date().toISOString() });
-
-          try {
-            localStorage.setItem(ACCOUNT_KEY, JSON.stringify(accounts));
-          } catch {
-            showError("Deze browser staat het opslaan van een account niet toe.");
-            return;
-          }
-        } else {
-          const account = accounts.find(item => item.email === email);
-
-          if (!account || (await hashPassword(password, account.salt)) !== account.passwordHash) {
-            showError("Het e-mailadres of wachtwoord klopt niet.");
-            return;
-          }
-        }
-
-        if (!saveUser(email)) {
-          showError("Je browser onthoudt je login niet. Open de site via de GitHub Pages-link en niet als los bestand.");
-          return;
-        }
-
-        location.replace("index.html");
+        const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            service_id: EMAILJS.serviceId, template_id: EMAILJS.templateId, user_id: EMAILJS.publicKey,
+            template_params: { to_email: to, from_email: from, subject, message, link }
+          })
+        });
+        if (!response.ok) throw new Error(await response.text());
+        say(`Uitnodiging verstuurd naar <strong>${escapeHtml(to)}</strong>.`);
+        form.reset();
       } catch (error) {
-        showError(error.message || "Er is iets misgegaan. Probeer opnieuw.");
+        say("De e-mail kon niet worden verstuurd. Controleer je EmailJS-gegevens en probeer het opnieuw.");
       } finally {
-        submitButton.disabled = false;
-        submitButton.textContent = registering ? "Account aanmaken" : "Inloggen";
+        button.disabled = false; button.textContent = "Uitnodiging versturen";
       }
-    });
-
-    // Al ingelogd? Ga direct naar de inventaris.
-    try {
-      if (localStorage.getItem(USER_KEY)) location.replace("index.html");
-    } catch {
-      showError("Lokale opslag is niet beschikbaar.");
+    } else {
+      say(`Je mailprogramma opent met de uitnodiging voor <strong>${escapeHtml(to)}</strong>. Klik daar op Verzenden.`);
+      location.href = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
     }
-  </script>
-
+  }
+</script>
 </body>
 </html>
